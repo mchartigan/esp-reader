@@ -1,3 +1,13 @@
+# build directories
+build/
+
+# vscode shit
+.vscode/
+
+# esp-idf components
+managed_components/
+
+### C++ ignore files ###
 # Prerequisites
 *.d
 
