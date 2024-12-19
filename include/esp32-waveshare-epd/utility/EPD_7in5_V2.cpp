@@ -38,11 +38,11 @@ parameter:
 static void EPD_Reset(void)
 {
     DEV_Digital_Write(EPD_RST_PIN, 1);
-    DEV_Delay_ms(200);
+    DEV_Delay_ms(20);
     DEV_Digital_Write(EPD_RST_PIN, 0);
     DEV_Delay_ms(2);
     DEV_Digital_Write(EPD_RST_PIN, 1);
-    DEV_Delay_ms(200);
+    DEV_Delay_ms(20);
 }
 
 /******************************************************************************
@@ -82,10 +82,12 @@ static void EPD_WaitUntilIdle(void)
 	do{
 		EPD_SendCommand(0x71);
 		busy = DEV_Digital_Read(EPD_BUSY_PIN);
-		busy =!(busy & 0x01); 
+		busy =!(busy & 0x01);
+        busy = 0x00;
 	}while(busy);
-    // default was 200 
-	// DEV_Delay_ms(200);      
+    // default was 200
+    // set to 3000 as an estimate of when the page stops refreshing
+	DEV_Delay_ms(3000);      
     Debug("e-Paper busy release\r\n");
 		
 }
