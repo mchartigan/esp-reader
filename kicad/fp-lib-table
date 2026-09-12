@@ -1,0 +1,4 @@
+(fp_lib_table
+	(version 7)
+	(lib (name "e-reader") (type "KiCad") (uri "${KIPRJMOD}/libs/footprints/e-reader.pretty") (options "") (descr ""))
+)
