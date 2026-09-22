@@ -2,7 +2,9 @@
 
 **Purpose of this file:** Background for continuing this KiCad hardware design project in a new chat session. Paste this in (or attach it) at the start of a new conversation so the assistant has the relevant context without needing the full chat history.
 
-**Last updated:** 2026-09-11, compiled from prior chat decisions plus two KiCad schematic exports: an earlier `ereader.pdf` (5 sheets, boost-converter power architecture) and a superseding `e-reader.pdf` (same 5 sheets, revised power architecture with the boost converter removed). The revised `e-reader.pdf` is the current state of the design; anything from the earlier export that's since changed is marked superseded below rather than deleted, so the history of *why* is preserved.
+**Last updated:** 2026-09-16, compiled from prior chat decisions plus two KiCad schematic exports: an earlier `ereader.pdf` (5 sheets, boost-converter power architecture) and a superseding `e-reader.pdf` (same 5 sheets, revised power architecture with the boost converter removed). The revised `e-reader.pdf` is the current state of the design; anything from the earlier export that's since changed is marked superseded below rather than deleted, so the history of *why* is preserved.
+
+**Since 2026-09-11:** Connector.kicad_sch's USB-to-UART chip was swapped from CH343G to **FT231XS-U** (supply-chain motivated — sourcing off Chinese-origin silicon), confirmed by a schematic screenshot review. See the revised Connector.kicad_sch section, USB Programming section, and Open Items below for details.
 
 ---
 
@@ -78,7 +80,9 @@ Block-diagram-only root sheet with sheet symbols for: Microcontroller (`MCU.kica
 ### Power.kicad_sch — "Power Management" (dated 2026-09-03) — **substantially revised, boost converter removed**
 
 **Current (latest export):**
-- **Battery charging circuit via USB:** U3 = **TP4056-42-ESOP8** linear LiPo charger, standard reference config. R21 = 1.2k sets PROG (~1A charge current). R18 = 0.4R in series on the USB input. **D7 (single status LED) via R19 (now 1k, was 10k)** on CHRG — the STDBY-pin status LED (previously D8 + R20 = 10k) has been removed, simplifying to one status LED. Output net **`VBAT`** feeds both the 2-pin battery connector (J3 = `Conn_BATT`) and the rest of the board directly.
+- **Battery charging circuit via USB:** U3 = **TP4056-42-ESOP8** linear LiPo charger, standard reference config. R21 = 1.2k sets PROG (~1A charge current) — **⚠️ flagged 2026-09-16, recommend changing to R21 ≈ 2.2k (~450mA)**, see "USB power budget" note below; not yet changed in the schematic as of this writing. R18 = 0.4R in series on the USB input. **D7 (single status LED) via R19 (now 1k, was 10k)** on CHRG — the STDBY-pin status LED (previously D8 + R20 = 10k) has been removed, simplifying to one status LED. Output net **`VBAT`** feeds both the 2-pin battery connector (J3 = `Conn_BATT`) and the rest of the board directly.
+  - **⚠️ New — USB power budget (2026-09-16):** J2/Connector.kicad_sch is wired for standard USB2.0 device operation (no BC1.2/PD negotiation), so the board's `bMaxPower` ceiling is 500mA total. R21 = 1.2k alone draws ~800mA–1A charge current, which already exceeds that before adding the FT231XS-U's own ~15–20mA. Recommend R21 ≈ 2.2k (TP4056 formula: I_charge ≈ 1V / R_prog) for ~450mA charge current, leaving headroom under 500mA. **Post-assembly step:** program the FT231XS-U's internal MTP memory via FT_PROG so its USB descriptor's `bMaxPower` field (500mA / 250 in 2mA units) matches actual combined board draw — this is a one-time over-USB configuration step, not a schematic change.
+  - Note: TP4056 charge current is not throttled during USB Suspend (no PWREN#-gated load switch implemented) — acceptable for a hobby board per discussion, but a fully USB-compliant "bus powered high power device" would use one of the FT231XS-U's CBUS pins configured as PWREN# for this. Not implemented; not currently planned.
 - **Boost converter eliminated.** The previous MT3608-based `VBAT` → `VBAT_5V` boost stage (U4, L2, D10, R22, R23, C25, C26) is **gone entirely**. There is no more boosted-5V rail on this board.
 - **USB power is now a pass-through via the TP4056**, not a separate diode-OR'd rail. `VDD_USB` feeds only the TP4056's input; when USB is connected, the TP4056's inherent behavior sources the downstream load from its BAT pin in addition to charging — no separate pass-through diode/switch was added, matching how these ICs normally work.
 - **Master power switch (SW6, SPST)** sits directly on `VBAT`, gating it into IC1 (ME6217C33M5G, main 3.3V LDO). Same relative position as before, but now switching raw (unboosted) battery voltage instead of a boosted+OR'd 5V rail.
@@ -93,13 +97,26 @@ Block-diagram-only root sheet with sheet symbols for: Microcontroller (`MCU.kica
 ### Display.kicad_sch — "e-Paper" (no date/rev filled in) — unchanged in latest export
 - **FPC connector: J1 = Hirose `FH12A-24S-0.5SH(55)`**, 24-pin/0.5mm pitch — matches datasheet dimensional requirements.
 - **Boost/drive circuit, confirmed matching the Waveshare reference exactly:** L1 = 10µH, D1/D2/D3 = MBR0530, **Q1 = BSS138LT1G** (see "Confirmed matches" above — not a discrepancy).
-- **SW1 DIP switch (`SW_DIP_x02`) + R1 (2.2R)** — confirmed matching the reference board's documented USB-TO-UART / RESE config switch (see table above).
+- **SW1 DIP switch (`SW_DIP_x02`) + R1 (2.2R)** — confirmed matching the reference board's documented USB-TO-UART / RESE config switch (see table above). **Confirmed (2026-09-16):** this switch is what connects `VDD_USB` (post-ferrite-bead VBUS, on Connector.kicad_sch) to `VDD_CH343` (feeding the USB-UART bridge chip's VCC) — they are not the same net directly, they're gated through SW1. This is intentional: with SW1 in the "USB TO UART: OFF" position, the USB-UART bridge chip (now FT231XS-U) is fully unpowered, presumably for battery-only operation where that chip should draw zero current. Not a connectivity bug — matches the documented switch function. (`VDD_CH343` naming is stale post CH343G→FT231XS-U swap — see rename recommendation in Connector.kicad_sch section above; applies to the label on this sheet too.)
 - Decoupling: several 1µF/10µF caps (C2–C9) plus C10/C11 (4.7µF) on the boost circuit, per reference topology. (Minor note: some cap values on this sheet — C5/C6/C7/C8 — read as 10µF in the latest export versus 1µF previously; not flagged as a problem, just noted as a difference from the earlier version in case it wasn't intentional.)
 
-### Connector.kicad_sch — "USB to UART" (dated 2026-09-03) — unchanged in latest export
-- **J2 = USB-C receptacle** (`USB_C_Receptacle_USB2.0_16P`). CC1/CC2 pulled to GND through 5.1k resistors (R10/R11) for USB2.0-only (no PD) device operation.
-- **U2 = CH343G, SOP16 package**, full pinout mapped in schematic (VDD5/V3/VIO tied with C17 1µF decoupling; TXD/RXD via 0Ω links R12/R13 for optional rework).
-- **Auto-reset/auto-program circuit:** two NPN transistors (Q4, Q5 = S8050) driven from CH343G's DTR/RTS, R24/R25 (10k) bases, C27 (4.7µF)/C28 (1µF) timing caps, drive the ESP32's EN and IO0 nets automatically during flashing (classic ESP32 dev-board auto-reset pattern). Bootloader entry works both via this auto-reset circuit and via the manual FLASH/RST buttons on the MCU sheet.
+### Connector.kicad_sch — "USB to UART" (dated 2026-09-03, **revised 2026-09-16 — CH343G replaced with FT231XS-U**)
+- **J2 = USB-C receptacle** (`USB_C_Receptacle_USB2.0_16P`). CC1/CC2 pulled to GND through 5.1k resistors (R10/R11) for USB2.0-only (no PD) device operation. Unchanged.
+- **U3 = FT231XS-U, SSOP-20 package** (replaces U2/CH343G-SOP16 — swapped for supply-chain reasons, FTDI is a UK company). Confirmed pinout (per FTDI datasheet): pin1=DTR, pin2=RTS, pin3=VCCIO, pin4=RXD, pin5=RI, pin6=GND, pin7=DSR, pin8=DCD, pin9=CTS, pin10=CBUS2, pin11=USBDP, pin12=USBDM, pin13=3V3OUT, pin14=RESET#, pin15=VCC, pin16=GND, pin17=CBUS1, pin18=CBUS0, pin19=CBUS3, pin20=TXD.
+  - No external EEPROM needed — FT231X has internal MTP memory for VID/PID/descriptor config, programmed over USB via FT_PROG (same mechanism as EEPROM on other FTDI parts, no extra hardware).
+  - CBUS0–3 (pins 17/18/10/19) left as NC pads for now — configurable I/O, not required for basic operation; optional future use for TX/RX activity LEDs.
+  - VCCIO (pin 3) and 3V3OUT (pin 13) tied together (chip's internal regulator supplies its own logic rail); RESET# (pin 14) tied to that same node — no external reset control, matching FTDI's Fig 6.1 bus-powered reference design. GND: pins 6, 16.
+  - **USB power/filtering, built per FTDI datasheet Figure 6.1 (Bus Powered Configuration) — new vs. the CH343G section, which had no equivalent filtering:**
+    - **FB1** = ferrite bead (Laird MI0805K400R-10, 0805 package) in series between USB-C VBUS and U3 pin 15 (VCC). Footprint: KiCad's generic 0805 hand-solder footprint (confirmed fine — pad geometry is part-agnostic; recommend swapping the *symbol* to `Device:Ferrite_Bead` for schematic readability even though the footprint is correct as-is).
+    - **R16/R17 = 27R** in series on USBDM (pin 12)/USBDP (pin 11), between U3 and the USB-C D−/D+ lines.
+    - **C16/C17 = 47pF** from D−/D+ to GND, connector-side of R16/R17.
+    - **C32 = 10nF** from post-ferrite VCC (labeled `VDD_USB`) to GND.
+    - **C30/C31 = 100nF + 4.7µF** bulk decoupling on the `VDD_CH343` rail (see net-naming note below).
+    - **C23 = 100nF** on the VCCIO/3V3OUT/RESET# node to GND.
+  - **⚠️ Stale net name:** the rail feeding U3's VCC (pin 15) is still labeled `VDD_CH343`, a leftover from the CH343G part — same category of issue as the `VDD_5V` stale name on Power.kicad_sch. **Recommend renaming to something like `VDD_UART_BRIDGE` or `VDD_FTDI`** across Connector.kicad_sch and Display.kicad_sch before layout.
+- **Auto-reset/auto-program circuit — unchanged topology, re-pointed to the new chip:** two NPN transistors (Q4, Q5 = S8050) now driven from **FT231XS-U pin 1 (DTR)** and **pin 2 (RTS)** (previously CH343G's DTR/RTS), R24/R25 (10k) bases, C27 (4.7µF)/C28 (1µF) timing caps, drive the ESP32's EN and IO0 nets automatically during flashing (classic ESP32/Espressif dev-board auto-reset pattern — confirmed this is Espressif's own reference circuit, not Waveshare-specific; see esptool docs: https://docs.espressif.com/projects/esptool/en/latest/esp32/advanced-topics/boot-mode-selection.html). C27 = 4.7µF on the EN-side node is within Espressif's documented 1–10µF recommended range for reset-timing reliability. Bootloader entry works both via this auto-reset circuit and via the manual FLASH/RST buttons on the MCU sheet.
+  - **Bring-up note (not a schematic defect):** verify DTR/RTS↔EN/IO0 polarity produces correct esptool auto-reset behavior at first power-up — easy to get swapped when re-sourcing from a different bridge chip, and it only shows up as "auto-flash doesn't work," not as an ERC failure.
+- **TXD/RXD:** U3 pin 20 (TXD) → R12 (0Ω, optional rework) → ESP32 RXD0; U3 pin 4 (RXD) → R13 (0Ω, optional rework) → ESP32 TXD0. Unchanged pattern from CH343G version.
 
 ### Storage.kicad_sch — "MicroSD Card Reader" (dated 2026-09-09) — unchanged in latest export
 - **J4 = `Micro_SD_Card`** (KiCad built-in symbol), standard **SPI mode** wiring: DAT3/CD → SD_CS, CMD → SD_MOSI, CLK → SD_SCLK, DAT0 → SD_MISO.
@@ -132,7 +149,7 @@ Block-diagram-only root sheet with sheet symbols for: Microcontroller (`MCU.kica
 - **Battery: Jauch LP675365JU**, LiPo pouch cell with built-in PCM (protection circuit module) — over-discharge/over-current/short-circuit protection lives in the cell itself, not as a separate board-level IC. Resolves the earlier open item about needing a dedicated protection IC.
 - **microSD socket**: KiCad's built-in `Micro_SD_Card` symbol/`Connector_Card.pretty` footprint family — still worth verifying the specific footprint variant against the actual part's mechanical drawing before committing to layout.
 - **E-paper FPC connector**: Hirose `FH12A-24S-0.5SH(55)`, 24-pin, 0.5mm pitch. Schematic symbol in place; PCB footprint build/verification status not confirmed from schematic review alone (double-check pin-1 orientation against the physical FPC per the datasheet note above).
-- **CH343G**: SOP16 package, pinout mapped in schematic.
+- **FT231XS-U** (revised 2026-09-16, replaces CH343G): SSOP-20 package, genuine FTDI part sourced via Digikey — chosen specifically to move off Chinese-sourced silicon. Full pinout mapped in schematic (see Connector.kicad_sch section above).
 - **General part-sourcing workflow**: KiCad built-in libraries first → manufacturer-published KiCad libraries second → SnapEDA/Ultra Librarian third → hand-build only when necessary. Always cross-check downloaded footprints against actual datasheet dimensions before trusting them.
 
 ---
@@ -151,10 +168,13 @@ Block-diagram-only root sheet with sheet symbols for: Microcontroller (`MCU.kica
 ## USB Programming — Decided & Implemented
 
 - **Standalone onboard USB programming, fully built out:**
-  - **Chip: CH343G, SOP16 package** — chosen over the reference board's CH343P (QFN16) for hand-solder friendliness. Pin remap to SOP16 done in schematic.
-  - **USB-C receptacle**, with correct CC1/CC2 5.1k pull-downs for USB2.0-only (no PD) device operation.
-  - **Auto-reset/auto-program circuit** (two-NPN-transistor DTR/RTS driver, standard ESP32 dev-board pattern) — bootloader entry works automatically via `esptool`/IDE flashing tools, in addition to the manual FLASH/RST buttons on the MCU sheet.
+  - **Chip: FT231XS-U, SSOP-20 package** (revised 2026-09-16, replaces CH343G-SOP16 — swapped for supply-chain reasons, FTDI is UK-based). Full pinout remapped in schematic; see Connector.kicad_sch section above for pin table and added USB filtering (ferrite bead + 27R/47pF per FTDI's bus-powered reference design, which the CH343G version didn't have).
+  - No external EEPROM required — FT231X uses internal MTP memory for descriptor config, programmable over USB via FT_PROG.
+  - **USB-C receptacle**, with correct CC1/CC2 5.1k pull-downs for USB2.0-only (no PD) device operation. Unchanged.
+  - **Auto-reset/auto-program circuit** (two-NPN-transistor DTR/RTS driver, standard Espressif dev-board pattern — confirmed via esptool's official docs, not just a Waveshare convention) — unchanged topology, re-pointed to FT231XS-U's DTR (pin1)/RTS (pin2). Bootloader entry works automatically via `esptool`/IDE flashing tools, in addition to the manual FLASH/RST buttons on the MCU sheet.
   - **USB power now also feeds the battery charger directly** (see Power System Notes) rather than joining a separate boosted system rail — i.e., USB's role is charging the battery and (via the TP4056's pass-through behavior) supplementing system power, not independently boosting to 5V.
+  - **Open action item:** R21 (TP4056 PROG resistor) needs changing from 1.2k to ~2.2k to bring charge current under the 500mA USB2.0 budget once the FT231XS-U's own draw is included — see Power System Notes.
+  - **Open action item:** post-assembly, program FT231XS-U's `bMaxPower` descriptor via FT_PROG to match actual board current draw.
 
 ---
 
@@ -189,6 +209,12 @@ Block-diagram-only root sheet with sheet symbols for: Microcontroller (`MCU.kica
 12. **NEW — `VDD_5V` net naming** in Power.kicad_sch is stale/misleading post-boost-removal; recommend renaming before layout (cosmetic, not functional).
 13. **NEW — LDO dropout margin near end-of-discharge**, now that both LDOs run directly off unboosted battery voltage. Needs a check against the LP675365JU's cutoff voltage and each LDO's dropout-vs-current curve, particularly IC1 (main 3.3V) under ESP32 TX current spikes.
 14. **NEW — Display.kicad_sch decoupling cap values** (C5–C8) appear as 10µF in the latest export vs. 1µF previously — worth a quick sanity check that this was intentional and not a stray edit.
+15. ~~CH343G supply-chain concern~~ — **Resolved 2026-09-16**: replaced with FT231XS-U (genuine FTDI, UK-based), full pinout/filtering re-implemented on Connector.kicad_sch per FTDI's bus-powered reference design.
+16. **NEW — `VDD_CH343` net naming** (Connector.kicad_sch and Display.kicad_sch) is stale post CH343G→FT231XS-U swap; recommend renaming to `VDD_UART_BRIDGE` or similar before layout (cosmetic, not functional — same category as item 12).
+17. **NEW — R21 charge-current resistor** should change from 1.2k to ~2.2k so TP4056 charge current + FT231XS-U draw stays under the 500mA USB2.0 device power budget. Not yet updated in the schematic as of 2026-09-16.
+18. **NEW — FT231XS-U `bMaxPower` USB descriptor** needs programming via FT_PROG after assembly, to match actual combined board current draw. Post-assembly step, not a schematic item.
+19. **NEW — CBUS0–3 pins** on FT231XS-U left as NC for now; optional future use (e.g., TX/RX activity LEDs) not yet decided.
+20. **NEW — Auto-reset DTR/RTS↔EN/IO0 polarity** should be verified at first bring-up now that the bridge chip changed — functionally should be correct (same circuit topology, doc-confirmed against Espressif's reference), but worth confirming on hardware since a swap is an easy place to introduce a polarity mixup that ERC wouldn't catch.
 
 ---
 
@@ -199,4 +225,7 @@ Block-diagram-only root sheet with sheet symbols for: Microcontroller (`MCU.kica
 - Espressif ESP Hardware Design Guidelines: https://docs.espressif.com/projects/esp-hardware-design-guidelines/
 - Espressif official KiCad libraries: github.com/espressif/kicad-libraries
 - Jauch LP675365JU battery datasheet (referenced in chat; not yet uploaded to this project — worth attaching if further power-budget/dropout analysis is needed)
+- FTDI FT231X datasheet (referenced in chat, esp. Section 9 pinout tables and Figure 6.1 bus-powered reference design): https://ftdichip.com/wp-content/uploads/2025/06/DS_FT231X.pdf
+- esptool official docs, ESP32 auto-reset circuit + truth table (confirms the two-transistor DTR/RTS circuit is Espressif's own reference design): https://docs.espressif.com/projects/esptool/en/latest/esp32/advanced-topics/boot-mode-selection.html
+- Espressif flashing-troubleshooting docs, points to the ESP32 DevKitC schematic as the canonical auto-reset reference: https://docs.espressif.com/projects/esp-idf/en/latest/get-started/flashing-troubleshooting.html
 - KiCad schematic exports: `ereader.pdf` (superseded — boost-converter power architecture) and `e-reader.pdf` (current — boost removed, battery-direct power architecture), KiCad E.D.A. 10.0.5, 6-page exports (root + 5 sheets)

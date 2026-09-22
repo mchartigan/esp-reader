@@ -2907,7 +2907,7 @@
 			)
 		)
 	)
-	(global_label "VDD_CH343"
+	(global_label "VDD_UART"
 		(shape input)
 		(at 102.87 125.73 180)
 		(fields_autoplaced yes)
@@ -2919,7 +2919,7 @@
 		)
 		(uuid "5aa7ef13-ef43-408a-8727-ca0f46c42f07")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 89.0596 125.73 0)
+			(at 90.6319 125.73 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)

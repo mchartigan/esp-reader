@@ -647,6 +647,24 @@
 			(embedded_fonts no)
 		)
 	)
+	(junction
+		(at 120.65 92.71)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "0cc63359-09e4-40dd-87ac-18399a4695b3")
+	)
+	(junction
+		(at 127 92.71)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "49885b78-a796-483d-a259-d4c313fad564")
+	)
+	(junction
+		(at 127 104.14)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "c7a8315b-df1a-4931-8537-05c0af435b07")
+	)
 	(no_connect
 		(at 149.86 85.09)
 		(uuid "7bb79132-7537-4372-87df-253a2cfd1d2c")
@@ -654,6 +672,46 @@
 	(no_connect
 		(at 149.86 102.87)
 		(uuid "80c1599d-7084-442f-9b8a-1979bfca378c")
+	)
+	(wire
+		(pts
+			(xy 116.84 92.71) (xy 120.65 92.71)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "00f15afa-cf39-4d0f-90fe-53bb87a4bf3b")
+	)
+	(wire
+		(pts
+			(xy 127 92.71) (xy 127 95.25)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "076e6a29-9108-4e57-9e7a-f7817d0c17ae")
+	)
+	(wire
+		(pts
+			(xy 120.65 92.71) (xy 120.65 95.25)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0956757b-65bc-4733-b46a-edf01332e56b")
+	)
+	(wire
+		(pts
+			(xy 120.65 92.71) (xy 127 92.71)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2bdb36f4-8915-409c-9fd7-52532493b5a1")
 	)
 	(wire
 		(pts
@@ -667,7 +725,7 @@
 	)
 	(wire
 		(pts
-			(xy 127 102.87) (xy 127 105.41)
+			(xy 127 102.87) (xy 127 104.14)
 		)
 		(stroke
 			(width 0)
@@ -687,23 +745,23 @@
 	)
 	(wire
 		(pts
-			(xy 127 92.71) (xy 127 95.25)
+			(xy 120.65 102.87) (xy 120.65 104.14)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "70af311b-d048-481b-8d59-d96ee3761fae")
+		(uuid "526ff676-4c0c-465d-ba50-542443ef3a88")
 	)
 	(wire
 		(pts
-			(xy 149.86 92.71) (xy 127 92.71)
+			(xy 127 104.14) (xy 127 105.41)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "7edcfa46-08f6-4a6e-887c-eebb4c4b4ff7")
+		(uuid "75a9880f-607a-48e3-b0ec-11ff2edb71e2")
 	)
 	(wire
 		(pts
@@ -755,9 +813,29 @@
 		)
 		(uuid "d1a15e53-717c-4b0a-8a77-409dabf59ba3")
 	)
+	(wire
+		(pts
+			(xy 127 92.71) (xy 149.86 92.71)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e0e0ecfd-65bf-4c5e-a253-74258720097f")
+	)
+	(wire
+		(pts
+			(xy 120.65 104.14) (xy 127 104.14)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f2a0e9ba-ca0f-49f7-b7cb-17e9e744393b")
+	)
 	(global_label "VDD_3V3"
 		(shape input)
-		(at 127 92.71 180)
+		(at 116.84 92.71 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -767,7 +845,7 @@
 		)
 		(uuid "3c5d589a-50a2-480e-967f-e88366e4e1cf")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 115.911 92.71 0)
+			(at 105.751 92.71 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -1079,6 +1157,87 @@
 			(project "e-reader"
 				(path "/7877b338-ec52-453f-bc8a-65b2f5c1d8f5/e2ccead2-1536-4817-89f4-1b88910553a3"
 					(reference "J4")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:C")
+		(at 120.65 99.06 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "d6661228-d43a-4589-a2cc-bddafbc635c1")
+		(property "Reference" "C33"
+			(at 114.3 97.536 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "10u"
+			(at 114.046 100.076 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder"
+			(at 121.6152 102.87 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 120.65 99.06 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Unpolarized capacitor"
+			(at 120.65 99.06 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "fe2db215-e2a8-46d3-ad74-0766008009be")
+		)
+		(pin "1"
+			(uuid "93056bae-ce62-4543-9535-439027cb6821")
+		)
+		(instances
+			(project "e-reader"
+				(path "/7877b338-ec52-453f-bc8a-65b2f5c1d8f5/e2ccead2-1536-4817-89f4-1b88910553a3"
+					(reference "C33")
 					(unit 1)
 				)
 			)
